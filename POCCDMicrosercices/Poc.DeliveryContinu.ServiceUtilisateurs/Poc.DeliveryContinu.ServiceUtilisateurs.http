@@ -1,0 +1,6 @@
+@Poc.DeliveryContinu.ServiceUtilisateurs_HostAddress = http://localhost:5083
+
+GET {{Poc.DeliveryContinu.ServiceUtilisateurs_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
