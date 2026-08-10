@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS demandes (
+    id SERIAL PRIMARY KEY,
+    titre VARCHAR(200) NOT NULL,
+    description TEXT,
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
