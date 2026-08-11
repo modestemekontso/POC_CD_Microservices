@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+ 
+metadata:
+  name: servicedemandes
+  namespace: poc-unit
+ 
+spec:
+  replicas: 1
+ 
+  selector:
+    matchLabels:
+      app: servicedemandes
+ 
+  template:
+    metadata:
+      labels:
+        app: servicedemandes
+ 
+    spec:
+      containers:
+        - name: servicedemandes
+          image: acrpocunit01.azurecr.io/servicedemandes:1.0
+          imagePullPolicy: IfNotPresent
+ 
+          ports:
+            - containerPort: 8080
+              name: http
+ 
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: servicedemandes-secret
+                  key: ConnectionStrings__DefaultConnection
+ 
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+ 
+            - name: ASPNETCORE_URLS
+              value: http://+:8080
+ 
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
