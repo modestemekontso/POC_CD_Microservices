@@ -51,6 +51,9 @@ spec:
                   name: postgresql-secret
                   key: POSTGRES_PASSWORD
 
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+
           volumeMounts:
             - name: postgresql-storage
               mountPath: /var/lib/postgresql/data
@@ -63,12 +66,12 @@ spec:
               cpu: "500m"
               memory: "1Gi"
 
-      
   volumeClaimTemplates:
     - metadata:
         name: postgresql-storage
         labels:
           app: postgresql
+          tier: database
       spec:
         accessModes:
           - ReadWriteOnce
