@@ -18,6 +18,10 @@ variables:
  
   testProjectPath: 'POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes.Tests/Poc.DeliveryContinu.ServiceDemandes.Tests.csproj'
  
+  acrName: 'acrpocunit01'
+ 
+  imageRepository: 'servicedemandes'
+ 
 steps:
  
 # -------------------------------------------------------
@@ -83,3 +87,18 @@ steps:
     projects: '$(testProjectPath)'
     arguments: '--configuration $(buildConfiguration) --no-build'
     publishTestResults: true
+ 
+# -------------------------------------------------------
+# Construction + publication de l'image dans ACR
+# -------------------------------------------------------
+- task: AzureCLI@2
+  displayName: "Construire et publier l'image ServiceDemandes dans ACR"
+  inputs:
+    azureSubscription: 'sc-sub-dev-exp-01'
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      az acr build `
+        --registry $(acrName) `
+        --image $(imageRepository):$(Build.BuildId) `
+        POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes
