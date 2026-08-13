@@ -21,7 +21,7 @@ variables:
 steps:
  
 # -------------------------------------------------------
-# Checkout
+# Checkout du repository
 # -------------------------------------------------------
 - checkout: self
   clean: true
@@ -74,16 +74,12 @@ steps:
     arguments: '--configuration $(buildConfiguration) --no-restore'
  
 # -------------------------------------------------------
-# Tests unitaires
+# Exécution des tests unitaires
 # -------------------------------------------------------
 - task: DotNetCoreCLI@2
   displayName: "Exécuter les tests unitaires ServiceDemandes"
   inputs:
     command: test
     projects: '$(testProjectPath)'
-    arguments: >
-      --configuration $(buildConfiguration)
-      --no-build
-      --logger trx
-      --results-directory $(Agent.TempDirectory)/TestResults
+    arguments: '--configuration $(buildConfiguration) --no-build'
     publishTestResults: true
