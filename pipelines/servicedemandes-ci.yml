@@ -13,7 +13,10 @@ pool:
  
 variables:
   buildConfiguration: 'Release'
+ 
   projectPath: 'POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/Poc.DeliveryContinu.ServiceDemandes.csproj'
+ 
+  testProjectPath: 'POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes.Tests/Poc.DeliveryContinu.ServiceDemandes.Tests.csproj'
  
 steps:
  
@@ -24,7 +27,7 @@ steps:
   clean: true
  
 # -------------------------------------------------------
-# Installer .NET 8
+# Installation .NET 8
 # -------------------------------------------------------
 - task: UseDotNet@2
   displayName: "Installer .NET 8"
@@ -33,7 +36,7 @@ steps:
     version: '8.x'
  
 # -------------------------------------------------------
-# Restore
+# Restore ServiceDemandes
 # -------------------------------------------------------
 - task: DotNetCoreCLI@2
   displayName: "Restaurer ServiceDemandes"
@@ -42,7 +45,16 @@ steps:
     projects: '$(projectPath)'
  
 # -------------------------------------------------------
-# Build
+# Restore projet de tests
+# -------------------------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: "Restaurer les tests ServiceDemandes"
+  inputs:
+    command: restore
+    projects: '$(testProjectPath)'
+ 
+# -------------------------------------------------------
+# Build ServiceDemandes
 # -------------------------------------------------------
 - task: DotNetCoreCLI@2
   displayName: "Compiler ServiceDemandes"
@@ -50,3 +62,28 @@ steps:
     command: build
     projects: '$(projectPath)'
     arguments: '--configuration $(buildConfiguration) --no-restore'
+ 
+# -------------------------------------------------------
+# Build projet de tests
+# -------------------------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: "Compiler les tests ServiceDemandes"
+  inputs:
+    command: build
+    projects: '$(testProjectPath)'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
+ 
+# -------------------------------------------------------
+# Tests unitaires
+# -------------------------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: "Exécuter les tests unitaires ServiceDemandes"
+  inputs:
+    command: test
+    projects: '$(testProjectPath)'
+    arguments: >
+      --configuration $(buildConfiguration)
+      --no-build
+      --logger trx
+      --results-directory $(Agent.TempDirectory)/TestResults
+    publishTestResults: true
