@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+      - main
+ 
+pr:
+  branches:
+    include:
+      - main
+ 
+pool:
+  vmImage: 'windows-latest'
+ 
+variables:
+  buildConfiguration: 'Release'
+  projectPath: 'POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/Poc.DeliveryContinu.ServiceDemandes.csproj'
+ 
+steps:
+ 
+# -------------------------------------------------------
+# Checkout
+# -------------------------------------------------------
+- checkout: self
+  clean: true
+ 
+# -------------------------------------------------------
+# Installer .NET 8
+# -------------------------------------------------------
+- task: UseDotNet@2
+  displayName: "Installer .NET 8"
+  inputs:
+    packageType: sdk
+    version: '8.x'
+ 
+# -------------------------------------------------------
+# Restore
+# -------------------------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: "Restaurer ServiceDemandes"
+  inputs:
+    command: restore
+    projects: '$(projectPath)'
+ 
+# -------------------------------------------------------
+# Build
+# -------------------------------------------------------
+- task: DotNetCoreCLI@2
+  displayName: "Compiler ServiceDemandes"
+  inputs:
+    command: build
+    projects: '$(projectPath)'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
