@@ -29,19 +29,20 @@ steps:
   clean: true
  
 # -------------------------------------------------------
-# Afficher le tag provenant du CI
+# Identifier l'image produite par le CI
 # -------------------------------------------------------
 - task: PowerShell@2
   displayName: "Identifier l'image produite par le CI"
   inputs:
     targetType: inline
     script: |
-      Write-Host "Pipeline CI : $(resources.pipeline.servicedemandesCI.pipelineName)"
-      Write-Host "Run CI      : $(resources.pipeline.servicedemandesCI.runID)"
-      Write-Host "Image       : $(acrLoginServer)/$(imageRepository):$(resources.pipeline.servicedemandesCI.runID)"
+      $imageTag = "$(resources.pipeline.servicedemandesCI.runID)"
+ 
+      Write-Host "BuildId du CI : $imageTag"
+      Write-Host "Image : $(acrLoginServer)/$(imageRepository):$imageTag"
  
 # -------------------------------------------------------
-# Connexion AKS
+# Connexion au cluster AKS
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Connexion au cluster AKS"
@@ -56,7 +57,7 @@ steps:
         --overwrite-existing
  
 # -------------------------------------------------------
-# Appliquer les manifests
+# Appliquer les manifests Kubernetes
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Appliquer les manifests ServiceDemandes"
@@ -72,7 +73,7 @@ steps:
         -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-service.yaml
  
 # -------------------------------------------------------
-# Déployer exactement l'image du CI
+# Déployer l'image créée par le CI
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Déployer l'image ServiceDemandes"
@@ -84,14 +85,14 @@ steps:
       $imageTag = "$(resources.pipeline.servicedemandesCI.runID)"
       $image = "$(acrLoginServer)/$(imageRepository):$imageTag"
  
-      Write-Host "Déploiement de : $image"
+      Write-Host "Déploiement de l'image : $image"
  
       kubectl set image deployment/$(deploymentName) `
         $(containerName)=$image `
         -n $(namespace)
  
 # -------------------------------------------------------
-# Vérifier rollout
+# Valider le rollout
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Valider le déploiement ServiceDemandes"
