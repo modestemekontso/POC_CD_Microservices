@@ -4,7 +4,7 @@ pr: none
 resources:
   pipelines:
     - pipeline: servicedemandesCI
-      source: POC_CD_Microservice
+      source: ci-aks
       trigger: true
 
 pool:
