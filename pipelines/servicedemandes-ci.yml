@@ -19,19 +19,18 @@ variables:
   testProjectPath: 'POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes.Tests/Poc.DeliveryContinu.ServiceDemandes.Tests.csproj'
  
   acrName: 'acrpocunit01'
- 
   imageRepository: 'servicedemandes'
  
 steps:
  
 # -------------------------------------------------------
-# Checkout du repository
+# Checkout
 # -------------------------------------------------------
 - checkout: self
   clean: true
  
 # -------------------------------------------------------
-# Installation .NET 8
+# Installer .NET 8
 # -------------------------------------------------------
 - task: UseDotNet@2
   displayName: "Installer .NET 8"
@@ -49,7 +48,7 @@ steps:
     projects: '$(projectPath)'
  
 # -------------------------------------------------------
-# Restore projet de tests
+# Restore Tests
 # -------------------------------------------------------
 - task: DotNetCoreCLI@2
   displayName: "Restaurer les tests ServiceDemandes"
@@ -68,7 +67,7 @@ steps:
     arguments: '--configuration $(buildConfiguration) --no-restore'
  
 # -------------------------------------------------------
-# Build projet de tests
+# Build Tests
 # -------------------------------------------------------
 - task: DotNetCoreCLI@2
   displayName: "Compiler les tests ServiceDemandes"
@@ -78,7 +77,7 @@ steps:
     arguments: '--configuration $(buildConfiguration) --no-restore'
  
 # -------------------------------------------------------
-# Exécution des tests unitaires
+# Tests unitaires
 # -------------------------------------------------------
 - task: DotNetCoreCLI@2
   displayName: "Exécuter les tests unitaires ServiceDemandes"
@@ -89,7 +88,7 @@ steps:
     publishTestResults: true
  
 # -------------------------------------------------------
-# Construction + publication de l'image dans ACR
+# Build + push image dans ACR
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Construire et publier l'image ServiceDemandes dans ACR"
@@ -98,7 +97,10 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
+      Write-Host "Tag image : $(Build.BuildId)"
+ 
       az acr build `
         --registry $(acrName) `
         --image $(imageRepository):$(Build.BuildId) `
         POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes
+Dispose d’un menu contextuel

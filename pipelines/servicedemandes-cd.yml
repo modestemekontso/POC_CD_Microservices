@@ -1,9 +1,11 @@
 trigger: none
+pr: none
  
-parameters:
-- name: imageTag
-  displayName: "Tag de l'image ServiceDemandes"
-  type: string
+resources:
+  pipelines:
+    - pipeline: servicedemandesCI
+      source: POC_CD_Microservice
+      trigger: true
  
 pool:
   vmImage: 'windows-latest'
@@ -20,11 +22,26 @@ variables:
  
 steps:
  
+# -------------------------------------------------------
+# Checkout
+# -------------------------------------------------------
 - checkout: self
   clean: true
  
 # -------------------------------------------------------
-# Connexion à AKS
+# Afficher le tag provenant du CI
+# -------------------------------------------------------
+- task: PowerShell@2
+  displayName: "Identifier l'image produite par le CI"
+  inputs:
+    targetType: inline
+    script: |
+      Write-Host "Pipeline CI : $(resources.pipeline.servicedemandesCI.pipelineName)"
+      Write-Host "Run CI      : $(resources.pipeline.servicedemandesCI.runID)"
+      Write-Host "Image       : $(acrLoginServer)/$(imageRepository):$(resources.pipeline.servicedemandesCI.runID)"
+ 
+# -------------------------------------------------------
+# Connexion AKS
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Connexion au cluster AKS"
@@ -39,7 +56,7 @@ steps:
         --overwrite-existing
  
 # -------------------------------------------------------
-# Déploiement des manifests Kubernetes
+# Appliquer les manifests
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Appliquer les manifests ServiceDemandes"
@@ -48,11 +65,14 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
-      kubectl apply -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-deployment.yaml
-      kubectl apply -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-service.yaml
+      kubectl apply `
+        -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-deployment.yaml
+ 
+      kubectl apply `
+        -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-service.yaml
  
 # -------------------------------------------------------
-# Mise à jour de l'image
+# Déployer exactement l'image du CI
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Déployer l'image ServiceDemandes"
@@ -61,12 +81,17 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
+      $imageTag = "$(resources.pipeline.servicedemandesCI.runID)"
+      $image = "$(acrLoginServer)/$(imageRepository):$imageTag"
+ 
+      Write-Host "Déploiement de : $image"
+ 
       kubectl set image deployment/$(deploymentName) `
-        $(containerName)=$(acrLoginServer)/$(imageRepository):${{ parameters.imageTag }} `
+        $(containerName)=$image `
         -n $(namespace)
  
 # -------------------------------------------------------
-# Vérification du rollout
+# Vérifier rollout
 # -------------------------------------------------------
 - task: AzureCLI@2
   displayName: "Valider le déploiement ServiceDemandes"
@@ -79,4 +104,14 @@ steps:
         -n $(namespace) `
         --timeout=180s
  
-      kubectl get pods -n $(namespace) -l app=servicedemandes
+      Write-Host "Image actuellement déployée :"
+ 
+      kubectl get deployment $(deploymentName) `
+        -n $(namespace) `
+        -o jsonpath="{.spec.template.spec.containers[0].image}"
+ 
+      Write-Host ""
+ 
+      kubectl get pods `
+        -n $(namespace) `
+        -l app=servicedemandes
