@@ -1,0 +1,82 @@
+trigger: none
+ 
+parameters:
+- name: imageTag
+  displayName: "Tag de l'image ServiceDemandes"
+  type: string
+ 
+pool:
+  vmImage: 'windows-latest'
+ 
+variables:
+  azureServiceConnection: 'sc-sub-dev-exp-01'
+  resourceGroup: 'rg-expsubdev01-modestemekontso-exp-cc-01'
+  aksClusterName: 'aks-poc-unit-01'
+  namespace: 'poc-unit'
+  acrLoginServer: 'acrpocunit01.azurecr.io'
+  imageRepository: 'servicedemandes'
+  deploymentName: 'servicedemandes'
+  containerName: 'servicedemandes'
+ 
+steps:
+ 
+- checkout: self
+  clean: true
+ 
+# -------------------------------------------------------
+# Connexion à AKS
+# -------------------------------------------------------
+- task: AzureCLI@2
+  displayName: "Connexion au cluster AKS"
+  inputs:
+    azureSubscription: '$(azureServiceConnection)'
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      az aks get-credentials `
+        --resource-group $(resourceGroup) `
+        --name $(aksClusterName) `
+        --overwrite-existing
+ 
+# -------------------------------------------------------
+# Déploiement des manifests Kubernetes
+# -------------------------------------------------------
+- task: AzureCLI@2
+  displayName: "Appliquer les manifests ServiceDemandes"
+  inputs:
+    azureSubscription: '$(azureServiceConnection)'
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      kubectl apply -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-deployment.yaml
+      kubectl apply -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-service.yaml
+ 
+# -------------------------------------------------------
+# Mise à jour de l'image
+# -------------------------------------------------------
+- task: AzureCLI@2
+  displayName: "Déployer l'image ServiceDemandes"
+  inputs:
+    azureSubscription: '$(azureServiceConnection)'
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      kubectl set image deployment/$(deploymentName) `
+        $(containerName)=$(acrLoginServer)/$(imageRepository):${{ parameters.imageTag }} `
+        -n $(namespace)
+ 
+# -------------------------------------------------------
+# Vérification du rollout
+# -------------------------------------------------------
+- task: AzureCLI@2
+  displayName: "Valider le déploiement ServiceDemandes"
+  inputs:
+    azureSubscription: '$(azureServiceConnection)'
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      kubectl rollout status deployment/$(deploymentName) `
+        -n $(namespace) `
+        --timeout=180s
+ 
+      kubectl get pods -n $(namespace) -l app=servicedemandes
