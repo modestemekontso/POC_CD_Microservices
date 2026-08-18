@@ -1,33 +1,35 @@
 trigger: none
 pr: none
- 
+
 resources:
   pipelines:
     - pipeline: servicedemandesCI
       source: POC_CD_Microservice
       trigger: true
- 
+
 pool:
   vmImage: 'windows-latest'
- 
+
 variables:
   azureServiceConnection: 'sc-sub-dev-exp-01'
   resourceGroup: 'rg-expsubdev01-modestemekontso-exp-cc-01'
   aksClusterName: 'aks-poc-unit-01'
   namespace: 'poc-unit'
+
   acrLoginServer: 'acrpocunit01.azurecr.io'
   imageRepository: 'servicedemandes'
+
   deploymentName: 'servicedemandes'
   containerName: 'servicedemandes'
- 
+
 steps:
- 
+
 # -------------------------------------------------------
 # Checkout
 # -------------------------------------------------------
 - checkout: self
   clean: true
- 
+
 # -------------------------------------------------------
 # Identifier l'image produite par le CI
 # -------------------------------------------------------
@@ -37,10 +39,12 @@ steps:
     targetType: inline
     script: |
       $imageTag = "$(resources.pipeline.servicedemandesCI.runID)"
- 
+      Write-Host "=========================================="
+      Write-Host "Image produite par le CI"
+      Write-Host "=========================================="
       Write-Host "BuildId du CI : $imageTag"
       Write-Host "Image : $(acrLoginServer)/$(imageRepository):$imageTag"
- 
+
 # -------------------------------------------------------
 # Connexion au cluster AKS
 # -------------------------------------------------------
@@ -51,11 +55,19 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
+      $ErrorActionPreference = "Stop"
+
+      Write-Host "Connexion au cluster AKS..."
       az aks get-credentials `
         --resource-group $(resourceGroup) `
         --name $(aksClusterName) `
         --overwrite-existing
- 
+
+      if ($LASTEXITCODE -ne 0) {
+        Write-Error "Impossible de se connecter au cluster AKS."
+        exit 1
+      }
+
 # -------------------------------------------------------
 # Appliquer les manifests Kubernetes
 # -------------------------------------------------------
@@ -66,12 +78,18 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
-      kubectl apply `
-        -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-deployment.yaml
- 
-      kubectl apply `
-        -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-service.yaml
- 
+      $ErrorActionPreference = "Stop"
+
+      Write-Host "Application des manifests Kubernetes..."
+
+      kubectl apply -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-deployment.yaml
+      kubectl apply -f POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/k8s/servicedemandes-service.yaml
+
+      if ($LASTEXITCODE -ne 0) {
+        Write-Error "L'application des manifests a échoué."
+        exit 1
+      }
+
 # -------------------------------------------------------
 # Déployer l'image créée par le CI
 # -------------------------------------------------------
@@ -82,15 +100,22 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
+      $ErrorActionPreference = "Stop"
+
       $imageTag = "$(resources.pipeline.servicedemandesCI.runID)"
       $image = "$(acrLoginServer)/$(imageRepository):$imageTag"
- 
+
       Write-Host "Déploiement de l'image : $image"
- 
+
       kubectl set image deployment/$(deploymentName) `
         $(containerName)=$image `
         -n $(namespace)
- 
+
+      if ($LASTEXITCODE -ne 0) {
+        Write-Error "Impossible de mettre à jour l'image du déploiement."
+        exit 1
+      }
+
 # -------------------------------------------------------
 # Valider le rollout
 # -------------------------------------------------------
@@ -101,18 +126,30 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
+      $ErrorActionPreference = "Stop"
+
+      Write-Host "Validation du rollout..."
+
       kubectl rollout status deployment/$(deploymentName) `
         -n $(namespace) `
         --timeout=180s
- 
+
+      if ($LASTEXITCODE -ne 0) {
+        Write-Error "Le rollout du déploiement a échoué."
+        exit 1
+      }
+
+      Write-Host "=========================================="
       Write-Host "Image actuellement déployée :"
- 
+      Write-Host "=========================================="
+
       kubectl get deployment $(deploymentName) `
         -n $(namespace) `
         -o jsonpath="{.spec.template.spec.containers[0].image}"
- 
+
       Write-Host ""
- 
+      Write-Host "Pods en cours d'exécution :"
+
       kubectl get pods `
         -n $(namespace) `
         -l app=servicedemandes
