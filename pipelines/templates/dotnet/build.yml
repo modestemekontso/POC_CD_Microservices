@@ -1,0 +1,15 @@
+parameters:
+- name: projectPath
+  type: string
+
+- name: configuration
+  type: string
+  default: 'Release'
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: "Compiler l'application .NET"
+  inputs:
+    command: build
+    projects: ${{ parameters.projectPath }}
+    arguments: '--configuration ${{ parameters.configuration }} --no-restore'

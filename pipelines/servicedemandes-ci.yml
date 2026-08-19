@@ -9,16 +9,13 @@ pr:
       - main
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: windows-latest
 
 variables:
-  buildConfiguration: 'Release'
+  buildConfiguration: Release
 
-  projectPath: 'POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/Poc.DeliveryContinu.ServiceDemandes.csproj'
-  testProjectPath: 'POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes.Tests/Poc.DeliveryContinu.ServiceDemandes.Tests.csproj'
-
-  acrName: 'acrpocunit01'
-  imageRepository: 'servicedemandes'
+  projectPath: POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes/Poc.DeliveryContinu.ServiceDemandes.csproj
+  testProjectPath: POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes.Tests/Poc.DeliveryContinu.ServiceDemandes.Tests.csproj
 
 steps:
 
@@ -29,90 +26,40 @@ steps:
   clean: true
 
 # -------------------------------------------------------
-# Installer .NET 8
+# Installer le SDK .NET
 # -------------------------------------------------------
-- task: UseDotNet@2
-  displayName: "Installer .NET 8 SDK"
-  inputs:
-    packageType: sdk
-    version: '8.x'
+- template: templates/dotnet/install-sdk.yml
+  parameters:
+    sdkVersion: 8.x
 
 # -------------------------------------------------------
 # Restore ServiceDemandes
 # -------------------------------------------------------
-- task: DotNetCoreCLI@2
-  displayName: "Restaurer ServiceDemandes"
-  inputs:
-    command: restore
-    projects: '$(projectPath)'
+- template: templates/dotnet/restore.yml
+  parameters:
+    projectPath: $(projectPath)
 
 # -------------------------------------------------------
-# Restore Tests
+# Restore projet de tests
 # -------------------------------------------------------
-- task: DotNetCoreCLI@2
-  displayName: "Restaurer les tests ServiceDemandes"
-  inputs:
-    command: restore
-    projects: '$(testProjectPath)'
+- template: templates/dotnet/restore.yml
+  parameters:
+    projectPath: $(testProjectPath)
 
 # -------------------------------------------------------
 # Build ServiceDemandes
 # -------------------------------------------------------
-- task: DotNetCoreCLI@2
-  displayName: "Compiler ServiceDemandes"
-  inputs:
-    command: build
-    projects: '$(projectPath)'
-    arguments: '--configuration $(buildConfiguration) --no-restore'
+- template: templates/dotnet/build.yml
+  parameters:
+    projectPath: $(projectPath)
+    configuration: $(buildConfiguration)
 
 # -------------------------------------------------------
-# Build Tests
+# Build projet de tests
 # -------------------------------------------------------
-- task: DotNetCoreCLI@2
-  displayName: "Compiler les tests ServiceDemandes"
-  inputs:
-    command: build
-    projects: '$(testProjectPath)'
-    arguments: '--configuration $(buildConfiguration) --no-restore'
+- template: templates/dotnet/build.yml
+  parameters:
+    projectPath: $(testProjectPath)
+    configuration: $(buildConfiguration)
 
 # -------------------------------------------------------
-# Tests unitaires
-# -------------------------------------------------------
-- task: DotNetCoreCLI@2
-  displayName: "Exécuter les tests unitaires ServiceDemandes"
-  inputs:
-    command: test
-    projects: '$(testProjectPath)'
-    arguments: '--configuration $(buildConfiguration) --no-build'
-    publishTestResults: true
-
-# -------------------------------------------------------
-# Build + push image dans ACR
-# -------------------------------------------------------
-- task: AzureCLI@2
-  displayName: "Construire et publier l'image ServiceDemandes dans ACR"
-  inputs:
-    azureSubscription: 'sc-sub-dev-exp-01'
-    scriptType: pscore
-    scriptLocation: inlineScript
-    inlineScript: |
-      $ErrorActionPreference = "Stop"
-
-      Write-Host "=========================================="
-      Write-Host "Construction de l'image Docker"
-      Write-Host "=========================================="
-      Write-Host "Registry : $(acrName)"
-      Write-Host "Repository : $(imageRepository)"
-      Write-Host "Tag : $(Build.BuildId)"
-
-      az acr build `
-        --registry $(acrName) `
-        --image "$(imageRepository):$(Build.BuildId)" `
-        POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes
-
-      if ($LASTEXITCODE -ne 0) {
-        Write-Error "La construction ou la publication de l'image ACR a échoué."
-        exit 1
-      }
-
-      Write-Host "Image publiée avec succès dans ACR."

@@ -1,0 +1,16 @@
+parameters:
+- name: testProjectPath
+  type: string
+
+- name: configuration
+  type: string
+  default: 'Release'
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: "Exécuter les tests unitaires"
+  inputs:
+    command: test
+    projects: ${{ parameters.testProjectPath }}
+    arguments: '--configuration ${{ parameters.configuration }} --no-build'
+    publishTestResults: true

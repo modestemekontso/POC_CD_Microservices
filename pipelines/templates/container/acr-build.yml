@@ -1,0 +1,33 @@
+parameters:
+- name: azureServiceConnection
+  type: string
+
+- name: acrName
+  type: string
+
+- name: imageRepository
+  type: string
+
+- name: buildContext
+  type: string
+
+- name: imageTag
+  type: string
+  default: '$(Build.BuildId)'
+
+steps:
+- task: AzureCLI@2
+  displayName: "Construire et publier l'image dans ACR"
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      Write-Host "Registry : ${{ parameters.acrName }}"
+      Write-Host "Repository : ${{ parameters.imageRepository }}"
+      Write-Host "Tag : ${{ parameters.imageTag }}"
+
+      az acr build `
+        --registry ${{ parameters.acrName }} `
+        --image ${{ parameters.imageRepository }}:${{ parameters.imageTag }} `
+        ${{ parameters.buildContext }}

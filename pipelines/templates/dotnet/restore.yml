@@ -1,0 +1,10 @@
+parameters:
+- name: projectPath
+  type: string
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: "Restaurer les dépendances"
+  inputs:
+    command: restore
+    projects: ${{ parameters.projectPath }}
