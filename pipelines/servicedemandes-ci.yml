@@ -63,3 +63,20 @@ steps:
     configuration: $(buildConfiguration)
 
 # -------------------------------------------------------
+# Tests unitaires
+# -------------------------------------------------------
+- template: templates/dotnet/test.yml
+  parameters:
+    testProjectPath: $(testProjectPath)
+    configuration: $(buildConfiguration)
+
+# -------------------------------------------------------
+# Construction et publication de l'image dans ACR
+# -------------------------------------------------------
+- template: templates/container/acr-build.yml
+  parameters:
+    azureServiceConnection: sc-sub-dev-exp-01
+    acrName: acrpocunit01
+    imageRepository: servicedemandes
+    buildContext: POCCDMicrosercices/Poc.DeliveryContinu.ServiceDemandes
+    imageTag: $(Build.BuildId)
