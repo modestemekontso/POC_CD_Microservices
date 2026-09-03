@@ -1,41 +1,52 @@
 trigger: none
- 
+
 resources:
   repositories:
-  - repository: gestioninterventions
-    type: git
-    name: Poc-Continuous-Delivery-Dotnet-Microservices
-    ref: refs/heads/main
- 
+    - repository: gestioninterventions
+      type: git
+      name: Poc-Continuous-Delivery-Dotnet-Microservices
+      ref: refs/heads/main
+
 pool:
   vmImage: 'windows-latest'
- 
+
 variables:
   solution: 'GestionInterventions.sln'
   buildConfiguration: 'Release'
- 
+
 steps:
- 
+
+# -------------------------------------------------------
 # Checkout du repo contenant les templates/pipeline
+# -------------------------------------------------------
 - checkout: self
- 
+  clean: true
+
+# -------------------------------------------------------
 # Checkout du repo contenant GestionInterventions
+# -------------------------------------------------------
 - checkout: gestioninterventions
- 
+  clean: true
+
+# -------------------------------------------------------
 # Restauration des packages NuGet
+# -------------------------------------------------------
 - template: templates/dot-framework/nuget-restore.yml
   parameters:
     solution: '$(Build.SourcesDirectory)/Poc-Continuous-Delivery-Dotnet-Microservices/$(solution)'
- 
+
+# -------------------------------------------------------
 # Compilation de la solution .NET Framework
+# -------------------------------------------------------
 - template: templates/dot-framework/msbuild.yml
   parameters:
     solution: '$(Build.SourcesDirectory)/Poc-Continuous-Delivery-Dotnet-Microservices/$(solution)'
     configuration: '$(buildConfiguration)'
- 
+
+# -------------------------------------------------------
 # Exécution des tests unitaires
+# -------------------------------------------------------
 - template: templates/dot-framework/vstest.yml
   parameters:
     testAssembly: '**\GestionInterventions.Tests.dll'
     configuration: '$(buildConfiguration)'
-Dispose d’un menu contextuel
