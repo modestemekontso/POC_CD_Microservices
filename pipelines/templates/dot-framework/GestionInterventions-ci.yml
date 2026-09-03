@@ -3,7 +3,7 @@ resources:
   repositories:
   - repository: gestioninterventions
     type: git
-    name: POC-DevSecOps/Gestion-Interventions
+    name: Poc-Continuous-Delivery-Dotnet-Microservices
     ref: refs/heads/main
 pool:
   vmImage: 'windows-latest'
