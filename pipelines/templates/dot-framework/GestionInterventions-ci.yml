@@ -1,0 +1,26 @@
+trigger: none
+resources:
+  repositories:
+  - repository: gestioninterventions
+    type: git
+    name: POC-DevSecOps/Gestion-Interventions
+    ref: refs/heads/main
+pool:
+  vmImage: 'windows-latest'
+variables:
+  solution: 'GestionInterventions.sln'
+  buildConfiguration: 'Release'
+steps:
+- checkout: self
+- checkout: gestioninterventions
+- template: templates/dot-framework/nuget-restore.yml
+  parameters:
+    solution: '$(Build.SourcesDirectory)/Gestion-Interventions/$(solution)'
+- template: templates/dot-framework/msbuild.yml
+  parameters:
+    solution: '$(Build.SourcesDirectory)/Gestion-Interventions/$(solution)'
+    configuration: '$(buildConfiguration)'
+- template: templates/dot-framework/vstest.yml
+  parameters:
+    testAssembly: '**\GestionInterventions.Tests.dll'
+    configuration: '$(buildConfiguration)'
