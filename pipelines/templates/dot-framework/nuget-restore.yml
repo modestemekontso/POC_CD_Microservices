@@ -1,0 +1,11 @@
+parameters:
+- name: solution
+  type: string
+steps:
+- task: NuGetToolInstaller@1
+  displayName: 'Installer NuGet'
+- task: NuGetCommand@2
+  displayName: 'Restaurer les packages NuGet'
+  inputs:
+    command: 'restore'
+    restoreSolution: '${{ parameters.solution }}'
