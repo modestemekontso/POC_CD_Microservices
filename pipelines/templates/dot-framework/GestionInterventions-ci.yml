@@ -31,14 +31,14 @@ steps:
 # -------------------------------------------------------
 # Restauration des packages NuGet
 # -------------------------------------------------------
-- template: templates/dot-framework/nuget-restore.yml
+- template: nuget-restore.yml
   parameters:
     solution: '$(Build.SourcesDirectory)/Poc-Continuous-Delivery-Dotnet-Microservices/$(solution)'
 
 # -------------------------------------------------------
 # Compilation de la solution .NET Framework
 # -------------------------------------------------------
-- template: templates/dot-framework/msbuild.yml
+- template: msbuild.yml
   parameters:
     solution: '$(Build.SourcesDirectory)/Poc-Continuous-Delivery-Dotnet-Microservices/$(solution)'
     configuration: '$(buildConfiguration)'
@@ -46,7 +46,7 @@ steps:
 # -------------------------------------------------------
 # Exécution des tests unitaires
 # -------------------------------------------------------
-- template: templates/dot-framework/vstest.yml
+- template: vstest.yml
   parameters:
     testAssembly: '**\GestionInterventions.Tests.dll'
     configuration: '$(buildConfiguration)'
