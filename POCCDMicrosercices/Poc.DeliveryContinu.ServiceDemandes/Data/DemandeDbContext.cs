@@ -17,18 +17,28 @@ namespace Poc.DeliveryContinu.ServiceDemandes.Data
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Demande>(entity =>
             {
+                entity.ToTable("demandes", "public");
+
                 entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                      .HasColumnName("id");
+
                 entity.Property(e => e.Titre)
-                    .IsRequired()
-                    .HasMaxLength(200);
+                      .HasColumnName("titre")
+                      .IsRequired()
+                      .HasMaxLength(200);
+
                 entity.Property(e => e.Description)
-                    .HasMaxLength(1000);
-                entity.Property(e => e.Statut)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                      .HasColumnName("description");
+
                 entity.Property(e => e.DateCreation)
-                    .IsRequired();
-                entity.ToTable("Demandes");
+                      .HasColumnName("date_creation");
+
+                entity.Property(e => e.Statut)
+                      .HasColumnName("statut")
+                      .IsRequired()
+                      .HasMaxLength(50);
             });
         }
     }
