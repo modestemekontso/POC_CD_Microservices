@@ -1,0 +1,14 @@
+parameters:
+- name: solution
+  type: string
+- name: configuration
+  type: string
+  default: 'Release'
+steps:
+- task: VSBuild@1
+  displayName: 'Compiler la solution .NET Framework'
+  inputs:
+    solution: '${{ parameters.solution }}'
+    platform: 'Any CPU'
+    configuration: '${{ parameters.configuration }}'
+    clean: true

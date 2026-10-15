@@ -1,0 +1,17 @@
+parameters:
+- name: testAssembly
+  type: string
+  default: '**\*test*.dll'
+- name: configuration
+  type: string
+  default: 'Release'
+steps:
+- task: VSTest@3
+  displayName: 'Exécuter les tests unitaires .NET Framework'
+  inputs:
+    testSelector: 'testAssemblies'
+    testAssemblyVer2: |
+      ${{ parameters.testAssembly }}
+      !**\obj\**
+    searchFolder: '$(System.DefaultWorkingDirectory)'
+    configuration: '${{ parameters.configuration }}'
