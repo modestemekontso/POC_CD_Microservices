@@ -19,5 +19,7 @@ namespace Poc.DeliveryContinu.ServiceDemandes.Models
         public string Statut { get; set; } = "En Attente";
 
         public DateTime DateCreation { get; set; } = DateTime.UtcNow;
+
+        //POC Devops - validation du déclenchement automatique CI/CD
     }
 }
